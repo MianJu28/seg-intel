@@ -6,6 +6,7 @@ import subprocess, os, glob
 # any media supported by ffmpeg may be used (video, audio, urls)
 import json
 import sys
+import os
 def segment(media, batch_size = 32):
     seg = Segmenter(vad_engine='sm', detect_gender=False, energy_ratio = 0.02, batch_size = batch_size)
     segmentation = seg(media)
@@ -63,26 +64,23 @@ def extract_mah_stuff(media, segmented_stamps, outdir = None):
     filename = os.path.basename(filename)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+    f = open(f'log/{outdir}-timestamp.txt', 'w')
     for i in range(len(timestamps_ext)):
+        f.write(f'{i}: {timestamps_ext[i][0]}-{timestamps_ext[i][1]}\n')
         oud = outdir if outdir else os.path.dirname(file)
-        # try:
-        #     pass
-        #     prefix = timestamps[i][1]
-        #     subprocess.call('ffmpeg -i "{}" {} -c:v copy -c:a copy "{}"'.format(
-        #     file, 
-        #     '-ss {} -to {}'.format(timestamps[i][0], timestamps_ext[i][1],),
-        #     os.path.join(oud, filename + '-' + prefix + fileext)))
-        # except:
-        #     prefix = str(i)
-        #     subprocess.call('ffmpeg -i "{}" {} -c:v copy -c:a copy "{}"'.format(
-        #         file, 
-        #         '-ss {} -to {}'.format(timestamps_ext[i][0], timestamps_ext[i][1],),
-        #         os.path.join(oud, filename + '-' + prefix + fileext)))
-        prefix = str(i)
-        os.system('ffmpeg -i "{}" {} -c:v copy -c:a copy "{}"'.format(
+        try:
+            prefix = timestamps[i][1]
+            os.system('ffmpeg -i "{}" {} -c:v copy -c:a copy "{}"'.format(
             file, 
-            '-ss {} -to {}'.format(timestamps_ext[i][0], timestamps_ext[i][1],),
+            '-ss {} -to {}'.format(timestamps[i][0], timestamps_ext[i][1],),
             os.path.join(oud, filename + '-' + prefix + fileext)))
+        except:
+            prefix = str(i)
+            os.system('ffmpeg -i "{}" {} -c:v copy -c:a copy "{}"'.format(
+                file, 
+                '-ss {} -to {}'.format(timestamps_ext[i][0], timestamps_ext[i][1],),
+                os.path.join(oud, filename + '-' + prefix + fileext)))
+    f.close()
 
 from ShazamAPI import Shazam
 import time, json
